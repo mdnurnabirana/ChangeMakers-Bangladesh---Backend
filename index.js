@@ -109,6 +109,35 @@ async function run() {
         });
       }
     });
+    
+    // Get all events for a specific user
+    app.get("/manage-event/:userId", async (req, res) => {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).send({
+          success: false,
+          message: "User ID is required",
+        });
+      }
+
+      try {
+        const events = await eventCollection.find({ userId }).sort({ eventDate: 1 }).toArray();
+
+        res.send({
+          success: true,
+          message: "Events fetched successfully",
+          data: events,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch events",
+          error: error.message,
+        });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
