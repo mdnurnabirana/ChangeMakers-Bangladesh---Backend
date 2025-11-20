@@ -44,7 +44,7 @@ async function run() {
       }
     });
 
-    // Create post API
+    // Create post API Event
     app.post('/event', async (req, res) => {
       const data = req.body;
       try {
@@ -53,6 +53,28 @@ async function run() {
       } catch (err) {
         console.error("Insert error:", err);
         res.status(500).send({ success: false, message: "Server error: " + err.message });
+      }
+    });
+
+    // Get API for Upcoming Events
+    app.get("/event", async (req, res) => {
+      try {
+        const events = await eventCollection
+          .find()
+          .sort({ eventDate: 1 }) 
+          .toArray();              
+
+        res.send({
+          success: true,
+          message: "Upcoming events fetched successfully",
+          data: events,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch events",
+          error: error.message,
+        });
       }
     });
 
