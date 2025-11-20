@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -78,7 +78,7 @@ async function run() {
       }
     });
 
-    // Get API for Single Upcoming Event
+    // Get API for Single Upcoming
     app.get("/event/:id", async (req, res) => {
       try {
         const id = req.params.id;
@@ -86,6 +86,8 @@ async function run() {
         const event = await eventCollection.findOne({
           _id: new ObjectId(id),
         });
+
+        const creator = await userCollection.findOne({ userId: event.userId });
 
         if (!event) {
           return res.status(404).send({
@@ -97,7 +99,7 @@ async function run() {
         res.send({
           success: true,
           message: "Event fetched successfully",
-          data: event,
+          data: { ...event, creator },
         });
       } catch (error) {
         res.status(500).send({
