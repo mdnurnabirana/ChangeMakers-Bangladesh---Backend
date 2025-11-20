@@ -78,6 +78,36 @@ async function run() {
       }
     });
 
+    // Get API for Single Upcoming Event
+    app.get("/event/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const event = await eventCollection.findOne({
+          _id: new ObjectId(id),
+        });
+
+        if (!event) {
+          return res.status(404).send({
+            success: false,
+            message: "Event not found",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "Event fetched successfully",
+          data: event,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch event",
+          error: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
