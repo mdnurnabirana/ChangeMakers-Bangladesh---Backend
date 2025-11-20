@@ -27,6 +27,7 @@ async function run() {
     const db = client.db('changemakersdb');
     // Create Collection
     const userCollection = db.collection("users");
+    const eventCollection = db.collection("events");
 
     // Create API's
     app.post('/user', async (req, res) => {
@@ -40,6 +41,18 @@ async function run() {
       } catch (err) {
         console.error(err);
         res.status(500).send({ success: false, error: err.message });
+      }
+    });
+
+    // Create post API
+    app.post('/event', async (req, res) => {
+      const data = req.body;
+      try {
+        const result = await eventCollection.insertOne(data);
+        res.send({ success: true, insertedId: result.insertedId });
+      } catch (err) {
+        console.error("Insert error:", err);
+        res.status(500).send({ success: false, message: "Server error: " + err.message });
       }
     });
 
