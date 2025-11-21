@@ -282,6 +282,33 @@ async function run() {
       }
     });
 
+    // Get all joined events for a user
+    app.get("/joined-events/:userId", async (req, res) => {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res
+          .status(400)
+          .send({ success: false, message: "User ID is required" });
+      }
+
+      try {
+        const joinedDocs = await joinedEventCollection
+          .find({ "joinedUsers.userId": userId })
+          .toArray();
+
+        const eventIds = joinedDocs.map((doc) => doc.eventId);
+        const events = await eventCollection
+          .find({ _id: { $in: eventIds.map((id) => new ObjectId(id)) } })
+          .toArray();
+
+        res.send({ success: true, data: events });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ success: false, error: err.message });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
