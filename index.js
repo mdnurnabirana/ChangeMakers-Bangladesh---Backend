@@ -28,6 +28,7 @@ async function run() {
     // Create Collection
     const userCollection = db.collection("users");
     const eventCollection = db.collection("events");
+    const joinedEventCollection = db.collection("joinedEvents");
 
     // Create API's
     app.post("/user", async (req, res) => {
@@ -184,6 +185,7 @@ async function run() {
       }
     });
 
+    // Delete API for Event
     app.delete("/manage-event/:id", async (req, res) => {
       const { id } = req.params;
 
@@ -217,6 +219,41 @@ async function run() {
           message: "Failed to delete event",
           error: error.message,
         });
+      }
+    });
+
+    app.post("/join-event", async (req, res) => {
+      const { eventId, userId } = req.body;
+
+      if (!eventId || !userId) {
+        return res.status(400).send({
+          success: false,
+          message: "eventId and userId are required",
+        });
+      }
+
+      try {
+        const result = await joinedEventCollection.updateOne(
+          { eventId: eventId }, 
+          {
+            $addToSet: {
+              joinedUsers: {
+                userId: userId,
+                joinedAt: new Date(),
+              },
+            },
+          },
+          { upsert: true } 
+        );
+
+        res.send({
+          success: true,
+          message: "User joined successfully",
+          result,
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ success: false, error: err.message });
       }
     });
 
