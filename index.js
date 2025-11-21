@@ -59,20 +59,43 @@ async function run() {
       }
     });
 
-    // Get API for Upcoming Events
+    // GET /event?type=Plantation&search=Roadside
     app.get("/event", async (req, res) => {
       try {
-        const events = await eventCollection
-          .find()
-          .sort({ eventDate: 1 })
-          .toArray();
+        const { type, search } = req.query;
+        const events = await eventCollection.find().toArray();
+
+        const today = new Date();
+        let upcomingEvents = events.filter(
+          (event) => new Date(event.eventDate) >= today
+        );
+
+        if (type) {
+          upcomingEvents = upcomingEvents.filter(
+            (event) => event.type === type
+          );
+        }
+
+        if (search) {
+          const searchLower = search.toLowerCase();
+          upcomingEvents = upcomingEvents.filter(
+            (event) =>
+              event.title.toLowerCase().includes(searchLower) ||
+              event.location.toLowerCase().includes(searchLower)
+          );
+        }
+
+        upcomingEvents.sort(
+          (a, b) => new Date(a.eventDate) - new Date(b.eventDate)
+        );
 
         res.send({
           success: true,
           message: "Upcoming events fetched successfully",
-          data: events,
+          data: upcomingEvents,
         });
       } catch (error) {
+        console.error(error);
         res.status(500).send({
           success: false,
           message: "Failed to fetch events",
