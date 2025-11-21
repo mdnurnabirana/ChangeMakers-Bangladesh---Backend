@@ -139,6 +139,46 @@ async function run() {
       }
     });
 
+    // Update API for Event
+    app.put("/manage-event/:id", async (req, res) => {
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).send({
+          success: false,
+          message: "Event ID is required",
+        });
+      }
+
+      const updateData = req.body;
+
+      try {
+        const result = await eventCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "No event found or no changes made",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "Event updated successfully",
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to update event",
+          error: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
