@@ -222,8 +222,10 @@ async function run() {
       }
     });
 
-    app.post("/join-event", async (req, res) => {
-      const { eventId, userId } = req.body;
+    // Join Event API
+    app.post("/join-event/:eventId", async (req, res) => {
+      const { eventId } = req.params;
+      const { userId } = req.body;
 
       if (!eventId || !userId) {
         return res.status(400).send({
@@ -234,22 +236,45 @@ async function run() {
 
       try {
         const result = await joinedEventCollection.updateOne(
-          { eventId: eventId }, 
+          { eventId: eventId },
           {
             $addToSet: {
               joinedUsers: {
-                userId: userId,
+                userId,
                 joinedAt: new Date(),
               },
             },
           },
-          { upsert: true } 
+          { upsert: true }
         );
 
         res.send({
           success: true,
           message: "User joined successfully",
           result,
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ success: false, error: err.message });
+      }
+    });
+
+    // Get joined users for an event
+    app.get("/joined-event/:eventId", async (req, res) => {
+      const { eventId } = req.params;
+
+      if (!eventId) {
+        return res
+          .status(400)
+          .send({ success: false, message: "eventId is required" });
+      }
+
+      try {
+        const joinedEvent = await joinedEventCollection.findOne({ eventId });
+
+        res.send({
+          success: true,
+          data: joinedEvent ? joinedEvent.joinedUsers : [],
         });
       } catch (err) {
         console.error(err);
