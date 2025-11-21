@@ -1,7 +1,7 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,19 +24,19 @@ async function run() {
     await client.connect();
 
     // Create Database
-    const db = client.db('changemakersdb');
+    const db = client.db("changemakersdb");
     // Create Collection
     const userCollection = db.collection("users");
     const eventCollection = db.collection("events");
 
     // Create API's
-    app.post('/user', async (req, res) => {
+    app.post("/user", async (req, res) => {
       const data = req.body;
       try {
-        const result = await userCollection.insertOne(data); 
+        const result = await userCollection.insertOne(data);
         res.send({
           success: true,
-          insertedId: result.insertedId
+          insertedId: result.insertedId,
         });
       } catch (err) {
         console.error(err);
@@ -45,14 +45,16 @@ async function run() {
     });
 
     // Create post API Event
-    app.post('/event', async (req, res) => {
+    app.post("/event", async (req, res) => {
       const data = req.body;
       try {
         const result = await eventCollection.insertOne(data);
         res.send({ success: true, insertedId: result.insertedId });
       } catch (err) {
         console.error("Insert error:", err);
-        res.status(500).send({ success: false, message: "Server error: " + err.message });
+        res
+          .status(500)
+          .send({ success: false, message: "Server error: " + err.message });
       }
     });
 
@@ -61,8 +63,8 @@ async function run() {
       try {
         const events = await eventCollection
           .find()
-          .sort({ eventDate: 1 }) 
-          .toArray();              
+          .sort({ eventDate: 1 })
+          .toArray();
 
         res.send({
           success: true,
@@ -109,7 +111,7 @@ async function run() {
         });
       }
     });
-    
+
     // Get all events for a specific user
     app.get("/manage-event/:userId", async (req, res) => {
       const { userId } = req.params;
@@ -122,7 +124,10 @@ async function run() {
       }
 
       try {
-        const events = await eventCollection.find({ userId }).sort({ eventDate: 1 }).toArray();
+        const events = await eventCollection
+          .find({ userId })
+          .sort({ eventDate: 1 })
+          .toArray();
 
         res.send({
           success: true,
@@ -179,16 +184,54 @@ async function run() {
       }
     });
 
+    app.delete("/manage-event/:id", async (req, res) => {
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).send({
+          success: false,
+          message: "Event ID is required",
+        });
+      }
+
+      try {
+        const result = await eventCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "No event found with this ID",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "Event deleted successfully",
+        });
+      } catch (error) {
+        console.error("Delete error:", error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to delete event",
+          error: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // await client.close(); // Don't close connection if server should keep running
   }
 }
 run().catch(console.dir);
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.send("Together, Make Bangladesh Great!");
 });
 
